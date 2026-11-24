@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>K-POP IDOL TETRIS｜偶像應援俄羅斯方塊</title>
+  <style>
+    :root {
+      --bg-grad-1: #f7cac9; /* 粉晶色 */
+      --bg-grad-2: #92a8d1; /* 寧靜藍 */
+      --bg-grad-3: #d8c7ff; /* 夢幻紫 */
+      --glass-bg: rgba(255, 255, 255, 0.22);
+      --glass-border: rgba(255, 255, 255, 0.45);
+      --text-main: #2d2640;
+      --text-sub: #574e70;
+      --accent: #ff5e9c;
+      --accent-hover: #e84886;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-3) 50%, var(--bg-grad-2) 100%);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow-x: hidden;
+    }
+
+    /* 頂部標題與工具列 */
+    header {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 10px 16px;
+      box-shadow: 0 8px 24px rgba(45, 38, 64, 0.1);
+    }
+
+    .title-box h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .group-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, #ff6b9d, #8c7ae6);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .header-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: #fff;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 主遊戲區排版 */
+    .game-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: center;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 96px;
+    }
+
+    .panel-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 8px;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(45, 38, 64, 0.08);
+    }
+
+    .panel-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--text-sub);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .panel-value {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    .mini-canvas {
+      display: block;
+      margin: 0 auto;
+      background: rgba(25, 20, 42, 0.78);
+      border-radius: 8px;
+    }
+
+    /* 棋盤容器 */
+    .board-container {
+      position: relative;
+      background: rgba(25, 20, 42, 0.88);
+      border: 3px solid rgba(255, 255, 255, 0.75);
+      border-radius: 16px;
+      padding: 4px;
+      box-shadow: 0 12px 32px rgba(45, 38, 64, 0.22);
+    }
+
+    #board {
+      display: block;
+      border-radius: 10px;
+    }
+
+    /* 應援特效浮動文字 */
+    #cheer-toast {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: linear-gradient(135deg, #ff6b9d, #a29bfe);
+      color: #fff;
+      font-weight: 900;
+      font-size: 1rem;
+      padding: 8px 14px;
+      border-radius: 999px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+      transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 5;
+    }
+
+    #cheer-toast.show {
+      opacity: 1;
+      transform: translate(-50%, -70%) scale(1.05);
+    }
+
+    /* 遮罩層（開始、暫停、結束、自訂設定） */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(25, 20, 42, 0.86);
+      backdrop-filter: blur(6px);
+      border-radius: 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      text-align: center;
+      color: #fff;
+      z-index: 10;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay h2 {
+      font-size: 1.35rem;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #ff9ff3, #feca57, #48dbfb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .overlay p {
+      font-size: 0.82rem;
+      color: #dcd6f7;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #ff6b9d, #ff8e53);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(255, 107, 157, 0.4);
+      transition: transform 0.15s;
+      margin: 4px;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin: 4px;
+    }
+
+    /* 自訂偶像彈窗 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 16, 36, 0.65);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .modal-backdrop.hidden {
+      display: none;
+    }
+
+    .modal-box {
+      background: #fff;
+      color: var(--text-main);
+      width: 100%;
+      max-width: 380px;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-box h3 {
+      font-size: 1.15rem;
+      margin-bottom: 6px;
+    }
+
+    .modal-box small {
+      display: block;
+      color: var(--text-sub);
+      font-size: 0.78rem;
+      margin-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1.5px solid #dcd6f7;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .color-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .member-item input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1.5px solid #e4e0f5;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    /* 手機與滑鼠虛擬按鍵 */
+    .touch-controls {
+      margin-top: 12px;
+      width: 100%;
+      max-width: 420px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      border-radius: 14px;
+      padding: 12px 6px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--text-main);
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(45, 38, 64, 0.08);
+    }
+
+    .ctrl-btn:active {
+      background: #fff;
+      transform: scale(0.95);
+    }
+
+    .ctrl-btn.accent {
+      background: linear-gradient(135deg, rgba(255, 107, 157, 0.85), rgba(162, 155, 254, 0.85));
+      color: #fff;
+    }
+
+    .key-hint {
+      margin-top: 8px;
+      font-size: 0.74rem;
+      color: var(--text-sub);
+      text-align: center;
+    }
+
+    @media (max-width: 440px) {
+      .side-panel {
+        width: 76px;
+      }
+      .panel-value {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-box">
+      <h1>💎 IDOL TETRIS <span class="group-badge" id="group-name-badge">DREAM STAGE</span></h1>
+    </div>
+    <div class="header-btns">
+      <button class="icon-btn" id="btn-customize">✨ 自訂偶像</button>
+      <button class="icon-btn" id="btn-sound">🔊</button>
+      <button class="icon-btn" id="btn-pause">⏸</button>
+    </div>
+  </header>
+
+  <main class="game-wrapper">
+    <!-- 左側：保留方塊 & 成績 -->
+    <aside class="side-panel">
+      <div class="panel-card">
+        <div class="panel-title">HOLD 保留</div>
+        <canvas id="hold-canvas" class="mini-canvas" width="76" height="76"></canvas>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">專輯銷量</div>
+        <div class="panel-value" id="score">0</div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">最高紀錄</div>
+        <div class="panel-value" id="high-score">0</div>
+      </div>
+    </aside>
+
+    <!-- 中央：主遊戲棋盤 -->
+    <div class="board-container">
+      <canvas id="board" width="260" height="520"></canvas>
+      <div id="cheer-toast">💎 ALL KILL 滿貫！</div>
+
+      <!-- 遊戲狀態遮罩 -->
+      <div class="overlay" id="overlay">
+        <h2 id="overlay-title">K-POP 偶像方塊</h2>
+        <p id="overlay-desc">
+          堆疊偶像應援方塊消除橫排，累積專輯銷量與舞台熱度！<br>
+          點擊右上角「✨ 自訂偶像」可輸入本命團名與成員暱稱。
+        </p>
+        <button class="primary-btn" id="btn-start">🎤 開始打歌舞台</button>
+        <button class="secondary-btn" id="btn-overlay-custom">✨ 設定團名與成員</button>
+      </div>
+    </div>
+
+    <!-- 右側：下一個方塊 & 等級 -->
+    <aside class="side-panel">
+      <div class="panel-card">
+        <div class="panel-title">NEXT 預告</div>
+        <canvas id="next-canvas" class="mini-canvas" width="76" height="76"></canvas>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">打歌週數</div>
+        <div class="panel-value" id="level">1</div>
+      </div>
+      <div class="panel-card">
+        <div class="panel-title">應援消除</div>
+        <div class="panel-value" id="lines">0</div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- 觸控 / 點擊操作鈕 -->
+  <div class="touch-controls">
+    <button class="ctrl-btn" id="ctrl-left">◀ 左移</button>
+    <button class="ctrl-btn" id="ctrl-down">▼ 加速</button>
+    <button class="ctrl-btn" id="ctrl-right">右移 ▶</button>
+    <button class="ctrl-btn accent" id="ctrl-rotate">↻ 旋轉</button>
+    <button class="ctrl-btn" id="ctrl-hold" style="grid-column: span 2;">⇄ 保留小卡 (C)</button>
+    <button class="ctrl-btn accent" id="ctrl-drop" style="grid-column: span 2;">⬇ 一鍵直落 (Space)</button>
+  </div>
+
+  <div class="key-hint">
+    電腦鍵盤：← → 移動 ｜ ↑ 旋轉 ｜ ↓ 加速 ｜ 空白鍵 直落 ｜ C 保留 ｜ P 暫停
+  </div>
+
+  <!-- 自訂偶像彈窗 -->
+  <div class="modal-backdrop hidden" id="custom-modal">
+    <div class="modal-box">
+      <h3>✨ 自訂你的偶像應援方塊</h3>
+      <small>輸入團名與 7 種方塊代表的成員暱稱或符號（建議 1～2 個字最清楚，會自動儲存在瀏覽器中）</small>
+      <div class="form-group">
+        <label for="input-group-name">偶像團體名稱</label>
+        <input type="text" id="input-group-name" maxlength="18" placeholder="例如：SEVENTEEN / DREAM STAGE" />
+      </div>
+      <div class="form-group">
+        <label>7 個方塊對應成員 / 應援物</label>
+        <div class="member-grid" id="member-inputs"></div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="secondary-btn" style="color:#574e70; border-color:#dcd6f7;" id="btn-reset-custom">恢復預設</button>
+        <button class="primary-btn" id="btn-save-custom">儲存設定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== 1. 遊戲設定與預設資料 ======
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK_SIZE = 26; // 260 x 520
+
+    const COLORS = [
+      null,
+      '#74b9ff', // 1: I - 寧靜藍
+      '#a29bfe', // 2: J - 薰衣草紫
+      '#fab1a0', // 3: L - 蜜桃橘
+      '#ffeaa7', // 4: O - 應援星光黃
+      '#55efc4', // 5: S - 薄荷綠
+      '#fd79a8', // 6: T - 粉晶玫瑰
+      '#ff7675'  // 7: Z - 珊瑚紅
+    ];
+
+    const SHAPES = [
+      null,
+      [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]], // I
+      [[2,0,0], [2,2,2], [0,0,0]],                   // J
+      [[0,0,3], [3,3,3], [0,0,0]],                   // L
+      [[4,4], [4,4]],                               // O
+      [[0,5,5], [5,5,0], [0,0,0]],                   // S
+      [[0,6,0], [6,6,6], [0,0,0]],                   // T
+      [[7,7,0], [0,7,7], [0,0,0]]                    // Z
+    ];
+
+    const DEFAULT_CONFIG = {
+      groupName: 'DREAM STAGE',
+      labels: ['💎', '🎤', '💃', '👑', '📸', '💖', '🔥']
+    };
+
+    let config = JSON.parse(localStorage.getItem('idolTetrisConfig')) || { ...DEFAULT_CONFIG };
+    let highScore = Number(localStorage.getItem('idolTetrisHighScore')) || 0;
+
+    // ====== 2. 音效合成器 (Web Audio API，免外部音檔) ======
+    let soundEnabled = true;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq, type = 'sine', duration = 0.08, vol = 0.08) {
+      if (!soundEnabled) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playClearSound(linesCount) {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      for (let i = 0; i < linesCount; i++) {
+        setTimeout(() => playTone(notes[i], 'triangle', 0.18, 0.12), i * 70);
+      }
+    }
+
+    // ====== 3. Canvas 與狀態變數 ======
+    const canvas = document.getElementById('board');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('next-canvas');
+    const nextCtx = nextCanvas.getContext('2d');
+    const holdCanvas = document.getElementById('hold-canvas');
+    const holdCtx = holdCanvas.getContext('2d');
+
+    let board = createBoard();
+    let currentPiece = null;
+    let nextPiece = null;
+    let holdPiece = null;
+    let canHold = true;
+
+    let score = 0;
+    let lines = 0;
+    let level = 1;
+    let dropCounter = 0;
+    let dropInterval = 850;
+    let lastTime = 0;
+    let isPaused = false;
+    let isGameOver = true;
+    let animId = null;
+
+    document.getElementById('high-score').textContent = highScore;
+    document.getElementById('group-name-badge').textContent = config.groupName;
+
+    function createBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    }
+
+    function createPiece(typeId) {
+      const matrix = SHAPES[typeId].map(row => [...row]);
+      return {
+        type: typeId,
+        matrix,
+        x: Math.floor(COLS / 2) - Math.ceil(matrix[0].length / 2),
+        y: typeId === 1 ? -1 : 0
+      };
+    }
+
+    function randomPiece() {
+      const typeId = Math.floor(Math.random() * 7) + 1;
+      return createPiece(typeId);
+    }
+
+    // ====== 4. 繪製小卡質感方塊 ======
+    function drawCell(context, x, y, typeId, size, isGhost = false) {
+      const px = x * size;
+      const py = y * size;
+      const color = COLORS[typeId];
+
+      if (isGhost) {
+        context.strokeStyle = color;
+        context.lineWidth = 1.5;
+        context.setLineDash([3, 3]);
+        context.strokeRect(px + 2, py + 2, size - 4, size - 4);
+        context.setLineDash([]);
+        return;
+      }
+
+      // 小卡底色與漸層光澤
+      context.fillStyle = color;
+      context.beginPath();
+      context.roundRect(px + 1, py + 1, size - 2, size - 2, 5);
+      context.fill();
+
+      // 頂部反光高光
+      context.fillStyle = 'rgba(255, 255, 255, 0.35)';
+      context.beginPath();
+      context.roundRect(px + 2, py + 2, size - 4, (size - 4) * 0.42, 4);
+      context.fill();
+
+      // 邊框
+      context.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+      context.lineWidth = 1;
+      context.strokeRect(px + 1.5, py + 1.5, size - 3, size - 3);
+
+      // 繪製成員文字或應援圖示
+      const label = config.labels[typeId - 1] || '';
+      if (label) {
+        context.fillStyle = '#1e1933';
+        const fontSize = label.length >= 2 ? Math.floor(size * 0.42) : Math.floor(size * 0.56);
+        context.font = `bold ${fontSize}px sans-serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(label, px + size / 2, py + size / 2 + 1);
+      }
+    }
+
+    function drawMatrix(context, matrix, offset, size, isGhost = false) {
+      matrix.forEach((row, y) => {
+        row.forEach((val, x) => {
+          if (val !== 0 && y + offset.y >= 0) {
+            drawCell(context, x + offset.x, y + offset.y, val, size, isGhost);
+          }
+        });
+      });
+    }
+
+    function drawMiniPreview(context, canvasEl, piece) {
+      context.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      if (!piece) return;
+      const miniSize = 16;
+      const m = SHAPES[piece.type];
+      // 計算實際非空邊界以置中
+      let minX = 4, maxX = 0, minY = 4, maxY = 0;
+      m.forEach((row, r) => row.forEach((v, c) => {
+        if (v) {
+          if (c < minX) minX = c;
+          if (c > maxX) maxX = c;
+          if (r < minY) minY = r;
+          if (r > maxY) maxY = r;
+        }
+      }));
+      const w = (maxX - minX + 1) * miniSize;
+      const h = (maxY - minY + 1) * miniSize;
+      const startX = (canvasEl.width - w) / 2 - minX * miniSize;
+      const startY = (canvasEl.height - h) / 2 - minY * miniSize;
+
+      m.forEach((row, r) => {
+        row.forEach((val, c) => {
+          if (val !== 0) {
+            drawCell(context, (startX / miniSize) + c, (startY / miniSize) + r, val, miniSize);
+          }
+        });
+      });
+    }
+
+    function draw() {
+      // 清空主棋盤並畫微弱網格線
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let r = 1; r < ROWS; r++) {
+        ctx.beginPath();
+        ctx.moveTo(0, r * BLOCK_SIZE);
+        ctx.lineTo(canvas.width, r * BLOCK_SIZE);
+        ctx.stroke();
+      }
+      for (let c = 1; c < COLS; c++) {
+        ctx.beginPath();
+        ctx.moveTo(c * BLOCK_SIZE, 0);
+        ctx.lineTo(c * BLOCK_SIZE, canvas.height);
+        ctx.stroke();
+      }
+
+      // 畫已固定的方塊
+      drawMatrix(ctx, board, { x: 0, y: 0 }, BLOCK_SIZE);
+
+      if (currentPiece && !isGameOver) {
+        // 畫落點預覽 (Ghost Piece)
+        const ghost = {
+          matrix: currentPiece.matrix,
+          x: currentPiece.x,
+          y: currentPiece.y
+        };
+        while (!collide(board, ghost)) {
+          ghost.y++;
+        }
+        ghost.y--;
+        drawMatrix(ctx, ghost.matrix, { x: ghost.x, y: ghost.y }, BLOCK_SIZE, true);
+
+        // 畫當前控制方塊
+        drawMatrix(ctx, currentPiece.matrix, { x: currentPiece.x, y: currentPiece.y }, BLOCK_SIZE);
+      }
+    }
+
+    // ====== 5. 碰撞、旋轉與消除邏輯 ======
+    function collide(boardRef, piece) {
+      const m = piece.matrix;
+      for (let y = 0; y < m.length; y++) {
+        for (let x = 0; x < m[y].length; x++) {
+          if (m[y][x] !== 0) {
+            const newX = piece.x + x;
+            const newY = piece.y + y;
+            if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+            if (newY >= 0 && boardRef[newY][newX] !== 0) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function merge(boardRef, piece) {
+      piece.matrix.forEach((row, y) => {
+        row.forEach((val, x) => {
+          if (val !== 0 && piece.y + y >= 0) {
+            boardRef[piece.y + y][piece.x + x] = val;
+          }
+        });
+      });
+    }
+
+    function rotateMatrix(matrix) {
+      return matrix[0].map((_, idx) => matrix.map(row => row[idx]).reverse());
+    }
+
+    function playerRotate() {
+      if (isPaused || isGameOver) return;
+      const oldMatrix = currentPiece.matrix;
+      const oldX = currentPiece.x;
+      currentPiece.matrix = rotateMatrix(currentPiece.matrix);
+
+      // 牆踢修正 (Wall Kick)
+      const kicks = [0, -1, 1, -2, 2];
+      for (let offset of kicks) {
+        currentPiece.x = oldX + offset;
+        if (!collide(board, currentPiece)) {
+          playTone(580, 'sine', 0.05, 0.06);
+          draw();
+          return;
+        }
+      }
+      // 無法旋轉則還原
+      currentPiece.matrix = oldMatrix;
+      currentPiece.x = oldX;
+    }
+
+    function playerMove(dir) {
+      if (isPaused || isGameOver) return;
+      currentPiece.x += dir;
+      if (collide(board, currentPiece)) {
+        currentPiece.x -= dir;
+      } else {
+        playTone(360, 'sine', 0.04, 0.04);
+        draw();
+      }
+    }
+
+    function playerDrop() {
+      if (isPaused || isGameOver) return;
+      currentPiece.y++;
+      if (collide(board, currentPiece)) {
+        currentPiece.y--;
+        lockPiece();
+      }
+      dropCounter = 0;
+      draw();
+    }
+
+    function playerHardDrop() {
+      if (isPaused || isGameOver) return;
+      let dropped = 0;
+      while (!collide(board, currentPiece)) {
+        currentPiece.y++;
+        dropped++;
+      }
+      currentPiece.y--;
+      score += Math.max(0, dropped - 1) * 2;
+      playTone(220, 'triangle', 0.09, 0.1);
+      lockPiece();
+      updateStats();
+      draw();
+    }
+
+    function playerHold() {
+      if (isPaused || isGameOver || !canHold) return;
+      playTone(660, 'sine', 0.07, 0.07);
+      const currentType = currentPiece.type;
+      if (!holdPiece) {
+        holdPiece = createPiece(currentType);
+        currentPiece = nextPiece;
+        nextPiece = randomPiece();
+      } else {
+        const tempType = holdPiece.type;
+        holdPiece = createPiece(currentType);
+        currentPiece = createPiece(tempType);
+      }
+      canHold = false;
+      drawMiniPreview(holdCtx, holdCanvas, holdPiece);
+      drawMiniPreview(nextCtx, nextCanvas, nextPiece);
+      draw();
+    }
+
+    function showCheer(linesCleared) {
+      const messages = {
+        1: '✨ 應援成功！SINGLE',
+        2: '💖 雙倍安可！DOUBLE',
+        3: '🔥 舞台炸裂！TRIPLE',
+        4: '💎 ALL KILL 滿貫！IDOL TETRIS!'
+      };
+      const toast = document.getElementById('cheer-toast');
+      toast.textContent = messages[linesCleared] || '✨ 應援成功！';
+      toast.classList.add('show');
+      clearTimeout(toast.timer);
+      toast.timer = setTimeout(() => toast.classList.remove('show'), 1100);
+    }
+
+    function sweepLines() {
+      let cleared = 0;
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (board[y].every(cell => cell !== 0)) {
+          board.splice(y, 1);
+          board.unshift(Array(COLS).fill(0));
+          cleared++;
+          y++;
+        }
+      }
+      if (cleared > 0) {
+        const lineScores = [0, 100, 300, 500, 800];
+        score += lineScores[cleared] * level;
+        lines += cleared;
+        level = Math.floor(lines / 10) + 1;
+        dropInterval = Math.max(140, 850 - (level - 1) * 65);
+        playClearSound(cleared);
+        showCheer(cleared);
+      }
+    }
+
+    function lockPiece() {
+      merge(board, currentPiece);
+      sweepLines();
+      updateStats();
+      canHold = true;
+      currentPiece = nextPiece;
+      nextPiece = randomPiece();
+      drawMiniPreview(nextCtx, nextCanvas, nextPiece);
+
+      if (collide(board, currentPiece)) {
+        triggerGameOver();
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('score').textContent = score.toLocaleString();
+      document.getElementById('lines').textContent = lines;
+      document.getElementById('level').textContent = level;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('idolTetrisHighScore', highScore);
+        document.getElementById('high-score').textContent = highScore.toLocaleString();
+      }
+    }
+
+    // ====== 6. 遊戲主迴圈與狀態控制 ======
+    function update(time = 0) {
+      if (isPaused || isGameOver) return;
+      const deltaTime = time - lastTime;
+      lastTime = time;
+      dropCounter += deltaTime;
+      if (dropCounter > dropInterval) {
+        playerDrop();
+      }
+      draw();
+      animId = requestAnimationFrame(update);
+    }
+
+    function startGame() {
+      board = createBoard();
+      score = 0;
+      lines = 0;
+      level = 1;
+      dropInterval = 850;
+      holdPiece = null;
+      canHold = true;
+      isPaused = false;
+      isGameOver = false;
+
+      currentPiece = randomPiece();
+      nextPiece = randomPiece();
+      drawMiniPreview(nextCtx, nextCanvas, nextPiece);
+      drawMiniPreview(holdCtx, holdCanvas, null);
+      updateStats();
+
+      document.getElementById('overlay').classList.add('hidden');
+      document.getElementById('btn-pause').textContent = '⏸';
+      lastTime = performance.now();
+      cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(update);
+    }
+
+    function togglePause() {
+      if (isGameOver) return;
+      isPaused = !isPaused;
+      const overlay = document.getElementById('overlay');
+      if (isPaused) {
+        document.getElementById('overlay-title').textContent = '⏸ 中場休息時間';
+        document.getElementById('overlay-desc').textContent = '喝口水、揮揮應援棒，準備好隨時繼續打歌！';
+        document.getElementById('btn-start').textContent = '▶ 繼續舞台';
+        overlay.classList.remove('hidden');
+        document.getElementById('btn-pause').textContent = '▶';
+      } else {
+        overlay.classList.add('hidden');
+        document.getElementById('btn-pause').textContent = '⏸';
+        lastTime = performance.now();
+        animId = requestAnimationFrame(update);
+      }
+    }
+
+    function triggerGameOver() {
+      isGameOver = true;
+      cancelAnimationFrame(animId);
+      playTone(300, 'sawtooth', 0.25, 0.08);
+      document.getElementById('overlay-title').textContent = '🎉 本場安可結束！';
+      document.getElementById('overlay-desc').innerHTML =
+        `【${config.groupName}】最終專輯銷量：<b>${score.toLocaleString()}</b> 張<br>共消除 <b>${lines}</b> 排應援方塊！`;
+      document.getElementById('btn-start').textContent = '🔄 再開一場演唱會';
+      document.getElementById('overlay').classList.remove('hidden');
+    }
+
+    // ====== 7. 鍵盤與按鈕事件綁定 ======
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('custom-modal').classList.contains('hidden')) return;
+      if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', 'Space'].includes(e.code)) {
+        e.preventDefault();
+      }
+      if (e.code === 'ArrowLeft') playerMove(-1);
+      else if (e.code === 'ArrowRight') playerMove(1);
+      else if (e.code === 'ArrowDown') playerDrop();
+      else if (e.code === 'ArrowUp' || e.code === 'KeyX') playerRotate();
+      else if (e.code === 'Space') playerHardDrop();
+      else if (e.code === 'KeyC' || e.code === 'ShiftLeft') playerHold();
+      else if (e.code === 'KeyP') togglePause();
+    });
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+      if (isPaused && !isGameOver) togglePause();
+      else startGame();
+    });
+
+    document.getElementById('btn-pause').addEventListener('click', togglePause);
+
+    document.getElementById('btn-sound').addEventListener('click', e => {
+      soundEnabled = !soundEnabled;
+      e.target.textContent = soundEnabled ? '🔊' : '🔇';
+    });
+
+    // 觸控虛擬按鈕
+    document.getElementById('ctrl-left').addEventListener('click', () => playerMove(-1));
+    document.getElementById('ctrl-right').addEventListener('click', () => playerMove(1));
+    document.getElementById('ctrl-down').addEventListener('click', () => playerDrop());
+    document.getElementById('ctrl-rotate').addEventListener('click', () => playerRotate());
+    document.getElementById('ctrl-hold').addEventListener('click', () => playerHold());
+    document.getElementById('ctrl-drop').addEventListener('click', () => playerHardDrop());
+
+    // ====== 8. 自訂偶像設定視窗邏輯 ======
+    const modal = document.getElementById('custom-modal');
+    const memberInputsContainer = document.getElementById('member-inputs');
+
+    function openCustomModal() {
+      if (!isGameOver && !isPaused) togglePause();
+      document.getElementById('input-group-name').value = config.groupName;
+      memberInputsContainer.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        const div = document.createElement('div');
+        div.className = 'member-item';
+        div.innerHTML = `
+          <span class="color-dot" style="background:${COLORS[i + 1]}"></span>
+          <input type="text" maxlength="3" data-idx="${i}" value="${config.labels[i]}" placeholder="方塊${i + 1}">
+        `;
+        memberInputsContainer.appendChild(div);
+      }
+      modal.classList.remove('hidden');
+    }
+
+    document.getElementById('btn-customize').addEventListener('click', openCustomModal);
+    document.getElementById('btn-overlay-custom').addEventListener('click', openCustomModal);
+
+    document.getElementById('btn-save-custom').addEventListener('click', () => {
+      const gName = document.getElementById('input-group-name').value.trim();
+      config.groupName = gName || DEFAULT_CONFIG.groupName;
+      const inputs = memberInputsContainer.querySelectorAll('input');
+      inputs.forEach(inp => {
+        const idx = Number(inp.dataset.idx);
+        config.labels[idx] = inp.value.trim() || DEFAULT_CONFIG.labels[idx];
+      });
+      localStorage.setItem('idolTetrisConfig', JSON.stringify(config));
+      document.getElementById('group-name-badge').textContent = config.groupName;
+      modal.classList.add('hidden');
+      drawMiniPreview(nextCtx, nextCanvas, nextPiece);
+      drawMiniPreview(holdCtx, holdCanvas, holdPiece);
+      draw();
+    });
+
+    document.getElementById('btn-reset-custom').addEventListener('click', () => {
+      config = { ...DEFAULT_CONFIG, labels: [...DEFAULT_CONFIG.labels] };
+      localStorage.removeItem('idolTetrisConfig');
+      openCustomModal();
+    });
+
+    // 初始畫面繪製
+    draw();
+  </script>
+</body>
+</html>
